@@ -173,3 +173,117 @@ func TestAwaitLimits(t *testing.T) {
 	}
 
 }
+
+func TestPassTimeInFuncBlocking(t *testing.T) {
+
+	startTime := time.Now()
+
+	err := AwaitBlocking(10*time.Millisecond, 100*time.Millisecond, func() bool {
+		time.Sleep(200 * time.Millisecond)
+		return true
+	})
+
+	delta := time.Now().Sub(startTime) / time.Millisecond
+
+	if delta < 200 {
+		t.Errorf("Took not long enough, took %dms, expected to be over 200ms", delta)
+	}
+
+	if err != nil {
+		t.Errorf("Expected await to pass successfully")
+	}
+}
+
+func TestAwaitBlockingTrue(t *testing.T) {
+	err := AwaitBlocking(DEFAULT_POLL_INTERVAL, DEFAULT_AT_MOST, func() bool {
+		return true
+	})
+
+	if err != nil {
+		t.Errorf("Await ended with unexpected error: %s", err.Error())
+	}
+}
+
+func TestAwaitBlockingFalseThenOk(t *testing.T) {
+
+	testVar := false
+
+	go func() {
+		time.Sleep(150 * time.Millisecond)
+		testVar = true
+	}()
+
+	err := AwaitBlocking(100*time.Millisecond, 300*time.Millisecond, func() bool {
+		return testVar
+	})
+
+	if err != nil {
+		t.Errorf("Await ended with unexpected error: %s", err.Error())
+	}
+}
+
+func TestAwaitBlockingFalse(t *testing.T) {
+
+	startTime := time.Now()
+
+	err := AwaitBlocking(10*time.Millisecond, 20*time.Millisecond, func() bool {
+		return false
+	})
+
+	delta := time.Now().Sub(startTime) / time.Millisecond
+
+	if delta > 20 {
+		t.Errorf("Took too long to cancel, took %dms, expected to be under 20ms", delta)
+	}
+
+	if err == nil {
+		t.Errorf("Expected await to end with error, but ended ok")
+	} else {
+		if !IsAwaitTimeoutError(err) {
+			t.Errorf("Expected a Timeout Error, actual error is: %s", err.Error())
+		}
+	}
+}
+
+func TestAwaitBlockingLimits(t *testing.T) {
+
+	err := AwaitBlocking(0, 10*time.Millisecond, func() bool {
+		return false
+	})
+
+	if err == nil {
+		t.Errorf("Expected error when 0 poll interval but none received")
+	} else {
+		expected := "PollInterval cannot be 0 or below, got: 0"
+		if err.Error() != expected {
+			t.Errorf("Expected message '%s' but got '%s'", expected, err.Error())
+		}
+	}
+
+	err = AwaitBlocking(10*time.Millisecond, 0, func() bool {
+		return false
+	})
+
+	if err == nil {
+		t.Errorf("Expected error when 0 poll interval but none received")
+	} else {
+		expected := "AtMost timeout cannot be 0 or below, got: 0"
+		if err.Error() != expected {
+			t.Errorf("Expected message '%s' but got '%s'", expected, err.Error())
+		}
+	}
+
+	err = AwaitBlocking(20*time.Millisecond, 10*time.Millisecond, func() bool {
+		return false
+	})
+
+	if err == nil {
+		t.Errorf("Expected error when 0 poll interval but none received")
+	} else {
+		expected := "PollInterval must be smaller than atMost timeout, got: pollInterval=20000000, atMost=10000000"
+		if err.Error() != expected {
+			t.Errorf("Expected message '%s' but got '%s'", expected, err.Error())
+		}
+	}
+
+}

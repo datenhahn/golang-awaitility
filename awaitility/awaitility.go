@@ -100,3 +100,41 @@ func AwaitPanic(pollInterval time.Duration, atMost time.Duration, until func() b
 func AwaitPanicDefault(until func() bool) {
 	AwaitPanic(DEFAULT_POLL_INTERVAL, DEFAULT_AT_MOST, until)
 }
+
+// AwaitBlocking It runs the "until" function inforeground so if the function runs longer
+// than the atMost timeout, await does NOT abort.
+// This is a tradeoff to have a determined state, the downside is that the function will
+// not time out guranteed.
+func AwaitBlocking(pollInterval time.Duration, atMost time.Duration, until func() bool) error {
+
+	if pollInterval <= 0 {
+		return fmt.Errorf("PollInterval cannot be 0 or below, got: %d", pollInterval)
+	}
+
+	if atMost <= 0 {
+		return fmt.Errorf("AtMost timeout cannot be 0 or below, got: %d", atMost)
+	}
+
+	if pollInterval > atMost {
+		return fmt.Errorf("PollInterval must be smaller than atMost timeout, got: pollInterval=%d, atMost=%d", pollInterval, atMost)
+	}
+
+	startTime := time.Now()
+	timeLeft := atMost
+
+	for {
+
+		if until() {
+			return nil
+		} else {
+			timeLeft = atMost - time.Now().Sub(startTime)
+
+			if timeLeft <= 0 {
+				stackTrace := string(debug.Stack())
+				return errors.New(fmt.Sprintf("%s: %d ms\n%s", TIMEOUT_ERROR, atMost/time.Millisecond, stackTrace))
+			}
+		}
+
+		time.Sleep(pollInterval)
+	}
+}
