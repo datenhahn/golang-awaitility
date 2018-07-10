@@ -1,14 +1,14 @@
-// Package golang_awaitility provides a simple mechanism to poll for conditions with a general timeout.
+// Package awaitility provides a simple mechanism to poll for conditions with a general timeout.
 //
 // It is inspired by the great jvm lib "awaitility" (see https://github.com/awaitility/awaitility)
-package golang_awaitility
+package awaitility
 
 import (
 	"fmt"
-	"time"
 	"github.com/pkg/errors"
 	"runtime/debug"
 	"strings"
+	"time"
 )
 
 const (
@@ -94,7 +94,6 @@ func AwaitPanic(pollInterval time.Duration, atMost time.Duration, until func() b
 		panic(err)
 	}
 }
-
 
 // AwaitDefault calls the "Await" function with a default pollInterval of 100 ms and a default atMost timeout
 // of 10 seconds.

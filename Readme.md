@@ -12,12 +12,13 @@ It is inspired by the great jvm lib "awaitility" (see https://github.com/awaitil
 package example
 
 import (
-	"github.com/ecodia/golang-awaitility"
+	"github.com/ecodia/golang-awaitility/awaitility"
 	"testing"
+	"time"
 	)
 
 func TestSomething(t *testing.T)  {
-   	err := Await(100 * time.Millisecond, 1000 * time.Millisecond, func() bool {
+   	err := awaitility.Await(100 * time.Millisecond, 1000 * time.Millisecond, func() bool {
    		// do a real check here, e.g. some kind of isConnected()
    		return true
    	})

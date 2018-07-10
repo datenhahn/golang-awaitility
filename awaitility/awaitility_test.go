@@ -1,9 +1,9 @@
-package golang_awaitility
+package awaitility
 
 import (
+	"errors"
 	"testing"
 	"time"
-	"errors"
 )
 
 func TestAwaitTrue(t *testing.T) {
@@ -51,7 +51,7 @@ func TestAwaitFalse(t *testing.T) {
 	if err == nil {
 		t.Errorf("Expected await to end with error, but ended ok")
 	} else {
-		if ! IsAwaitTimeoutError(err) {
+		if !IsAwaitTimeoutError(err) {
 			t.Errorf("Expected a Timeout Error, actual error is: %s", err.Error())
 		}
 	}
@@ -141,9 +141,9 @@ func TestAwaitLimits(t *testing.T) {
 		t.Errorf("Expected error when 0 poll interval but none received")
 	} else {
 		expected := "PollInterval cannot be 0 or below, got: 0"
-	   if err.Error() != expected {
-	   	t.Errorf("Expected message '%s' but got '%s'", expected, err.Error())
-	   }
+		if err.Error() != expected {
+			t.Errorf("Expected message '%s' but got '%s'", expected, err.Error())
+		}
 	}
 
 	err = Await(10*time.Millisecond, 0, func() bool {
@@ -159,7 +159,6 @@ func TestAwaitLimits(t *testing.T) {
 		}
 	}
 
-
 	err = Await(20*time.Millisecond, 10*time.Millisecond, func() bool {
 		return false
 	})
@@ -172,6 +171,5 @@ func TestAwaitLimits(t *testing.T) {
 			t.Errorf("Expected message '%s' but got '%s'", expected, err.Error())
 		}
 	}
-
 
 }
